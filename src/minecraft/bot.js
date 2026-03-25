@@ -31,6 +31,9 @@ let bot            = null;
 let whisperTimer   = null;
 let isConnected    = false;
 
+/** When false, the bot will not attempt to reconnect after a disconnect. */
+let autoReconnect  = true;
+
 /** Map of playerName → timestamp of last whisper sent. */
 const lastWhispered = new Map();
 
@@ -163,7 +166,8 @@ function createBot() {
   // ── Kicked ────────────────────────────────────────────────────────────────
   bot.on('kicked', (reason) => {
     isConnected = false;
-    const msg = `⚠️ Minecraft bot was kicked: ${reason}`;
+    const reasonStr = typeof reason === 'string' ? reason : JSON.stringify(reason);
+    const msg = `⚠️ Minecraft bot was kicked: ${reasonStr}`;
     console.warn(`[Bot] ${msg}`);
     logToChannel(msg);
     scheduleReconnect();
@@ -194,9 +198,11 @@ function createBot() {
 /**
  * Schedule a reconnect attempt after RECONNECT_DELAY_MS.
  * Guards against duplicate timers by using a one-shot timeout.
+ * Only reconnects if autoReconnect is enabled.
  */
 let reconnectTimeout = null;
 function scheduleReconnect() {
+  if (!autoReconnect) return; // auto-reconnect disabled
   if (reconnectTimeout) return; // already scheduled
   reconnectTimeout = setTimeout(() => {
     reconnectTimeout = null;
@@ -204,4 +210,43 @@ function scheduleReconnect() {
   }, RECONNECT_DELAY_MS);
 }
 
-module.exports = { createBot };
+/**
+ * Connect the Minecraft bot and enable auto-reconnect.
+ */
+function connectBot() {
+  autoReconnect = true;
+  if (!isConnected) {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+    createBot();
+  }
+}
+
+/**
+ * Disconnect the Minecraft bot and disable auto-reconnect.
+ */
+function disconnectBot() {
+  autoReconnect = false;
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+  if (bot) {
+    bot.quit();
+  }
+}
+
+/**
+ * Send a chat/command string to the Minecraft server.
+ * @param {string} command - The command or chat message to send (e.g. '/tp PlayerName').
+ * @returns {boolean} True if the command was sent, false if the bot is not connected.
+ */
+function sendCommand(command) {
+  if (!isConnected || !bot) return false;
+  bot.chat(command);
+  return true;
+}
+
+module.exports = { createBot, connectBot, disconnectBot, sendCommand, getIsConnected: () => isConnected };
