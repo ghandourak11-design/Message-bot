@@ -10,7 +10,6 @@ const requiredVars = [
   'DISCORD_TOKEN',
   'DISCORD_CLIENT_ID',
   'CHAT_CHANNEL_ID',
-  'MINECRAFT_HOST',
 ];
 
 for (const key of requiredVars) {
@@ -28,7 +27,7 @@ module.exports = {
     guildId: process.env.DISCORD_GUILD_ID || null,
   },
   minecraft: {
-    host: process.env.MINECRAFT_HOST,
+    host: process.env.MINECRAFT_HOST || null,
     port: parseInt(process.env.MINECRAFT_PORT || '25565', 10),
   },
 };

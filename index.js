@@ -17,12 +17,14 @@ const messageCommand    = require('./src/commands/message');
 const connectCommand    = require('./src/commands/connect');
 const disconnectCommand = require('./src/commands/disconnect');
 const cmdCommand        = require('./src/commands/cmd');
+const serverCommand     = require('./src/commands/server');
 
 client.commands.set(radiusCommand.data.name,     radiusCommand);
 client.commands.set(messageCommand.data.name,    messageCommand);
 client.commands.set(connectCommand.data.name,    connectCommand);
 client.commands.set(disconnectCommand.data.name, disconnectCommand);
 client.commands.set(cmdCommand.data.name,        cmdCommand);
+client.commands.set(serverCommand.data.name,     serverCommand);
 
 // ─── Discord ready ────────────────────────────────────────────────────────────
 
@@ -38,6 +40,7 @@ client.once('ready', async () => {
       connectCommand.data.toJSON(),
       disconnectCommand.data.toJSON(),
       cmdCommand.data.toJSON(),
+      serverCommand.data.toJSON(),
     ];
 
     const rest     = new REST({ version: '10' }).setToken(config.discord.token);

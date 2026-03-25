@@ -24,7 +24,11 @@ Message-bot/
 ├── src/
 │   ├── commands/
 │   │   ├── radius.js        # /radius set command
-│   │   └── message.js       # /message add|remove|list commands
+│   │   ├── message.js       # /message add|remove|list commands
+│   │   ├── server.js        # /server command (set IP and port)
+│   │   ├── connect.js       # /connect command
+│   │   ├── disconnect.js    # /disconnect command
+│   │   └── cmd.js           # /cmd command
 │   ├── discord/
 │   │   └── client.js        # Discord client + cooldown + channel logger
 │   ├── minecraft/
@@ -85,10 +89,6 @@ CHAT_CHANNEL_ID=the_channel_id_for_bot_logs
 # Right-click your server name in Discord (Developer Mode) → Copy Server ID
 # If omitted, commands register globally (takes up to 1 hour to appear)
 DISCORD_GUILD_ID=your_discord_guild_id_here
-
-# Minecraft
-MINECRAFT_HOST=mc.donutsmp.net
-MINECRAFT_PORT=25565
 ```
 
 > **How to get IDs:** Enable Developer Mode in Discord (User Settings → Advanced → Developer Mode), then right-click any channel or server to copy its ID.
@@ -114,9 +114,10 @@ npm start
 
 The bot will:
 1. Log in to Discord
-2. Post a 🔐 **Microsoft Auth Required** embed in your `CHAT_CHANNEL_ID` channel with a device code
-3. After you authenticate via the link in the embed, connect to the Minecraft server
-4. Start whispering nearby players every 15 seconds
+2. Wait for you to set a server with `/server <ip> [port]` (if not already set)
+3. When you use `/connect`, post a 🔐 **Microsoft Auth Required** embed with a device code
+4. After you authenticate via the link in the embed, connect to the Minecraft server
+5. Start whispering nearby players every 15 seconds
 
 ---
 
@@ -124,6 +125,9 @@ The bot will:
 
 | Command | Description |
 |---|---|
+| `/server <ip> [port]` | Set the Minecraft server IP and port |
+| `/connect` | Connect the bot to the configured server |
+| `/disconnect` | Disconnect the bot and disable auto-reconnect |
 | `/radius set <number>` | Set the whisper detection radius (1–512 blocks) |
 | `/message add <text>` | Add a new message to the whisper pool |
 | `/message remove <text or id>` | Remove a message by its text or list number |
@@ -140,8 +144,6 @@ All commands have a **3-second per-user cooldown**.
 | `DISCORD_TOKEN` | ✅ | Discord bot token |
 | `DISCORD_CLIENT_ID` | ✅ | Discord application/client ID |
 | `CHAT_CHANNEL_ID` | ✅ | Channel ID for bot logs and auth codes |
-| `MINECRAFT_HOST` | ✅ | Minecraft server host |
-| `MINECRAFT_PORT` | ❌ | Server port (default: `25565`) |
 | `DISCORD_GUILD_ID` | ❌ | Guild ID for instant command registration |
 
 ---
@@ -156,7 +158,11 @@ Settings are saved to `data/settings.json` automatically. Example:
   "messages": [
     "Hey! Want to team up?",
     "Nice to meet you on DonutSMP!"
-  ]
+  ],
+  "server": {
+    "host": "mc.example.net",
+    "port": 25565
+  }
 }
 ```
 
@@ -169,7 +175,7 @@ This file is created automatically on first run and survives restarts.
 - The bot whispers **one random eligible player** every **15 seconds**
 - A player won't be whispered again for **60 seconds** after receiving a message
 - The bot skips its tick if there are no messages in the pool or no eligible players nearby
-- If the bot disconnects, it will attempt to reconnect after **10 seconds**
+- If the bot disconnects, it will attempt to reconnect after **15 seconds**
 
 ---
 

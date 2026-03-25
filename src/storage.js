@@ -14,6 +14,10 @@ const DATA_FILE = path.join(__dirname, '..', 'data', 'settings.json');
 const DEFAULTS = {
   radius: 50,
   messages: [],
+  server: {
+    host: null,
+    port: 25565,
+  },
 };
 
 /**
@@ -108,4 +112,26 @@ function removeMessage(textOrId) {
   return removed;
 }
 
-module.exports = { getRadius, setRadius, getMessages, addMessage, removeMessage };
+// ─── Server ──────────────────────────────────────────────────────────────────
+
+/**
+ * Get the currently saved server settings.
+ * @returns {{ host: string|null, port: number }}
+ */
+function getServer() {
+  const settings = load();
+  return settings.server || DEFAULTS.server;
+}
+
+/**
+ * Persist new server connection settings.
+ * @param {string} host
+ * @param {number} port
+ */
+function setServer(host, port) {
+  const settings = load();
+  settings.server = { host, port };
+  save(settings);
+}
+
+module.exports = { getRadius, setRadius, getMessages, addMessage, removeMessage, getServer, setServer };

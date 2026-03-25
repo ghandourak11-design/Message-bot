@@ -7,6 +7,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const botModule = require('../minecraft/bot');
 const { logToChannel } = require('../discord/client');
+const { getServer } = require('../storage');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -21,10 +22,15 @@ module.exports = {
       return interaction.reply({ content: '⚠️ Bot is already connected.', ephemeral: true });
     }
 
+    const server = getServer();
+    if (!server.host) {
+      return interaction.reply({ content: '⚠️ No server configured. Use `/server` to set the IP and port first.', ephemeral: true });
+    }
+
     botModule.connectBot();
 
-    const msg = `🔌 Bot connection initiated by ${interaction.user.tag}. Auto-reconnect enabled.`;
-    await interaction.reply({ content: '✅ Connecting bot to server... Auto-reconnect enabled.' });
+    const msg = `🔌 Bot connection initiated by ${interaction.user.tag} to **${server.host}:${server.port}**. Auto-reconnect enabled.`;
+    await interaction.reply({ content: `✅ Connecting bot to **${server.host}:${server.port}**... Auto-reconnect enabled.` });
     await logToChannel(msg);
     console.log(`[Connect] ${msg}`);
   },
