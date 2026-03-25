@@ -11,7 +11,6 @@ const requiredVars = [
   'DISCORD_CLIENT_ID',
   'CHAT_CHANNEL_ID',
   'MINECRAFT_HOST',
-  'MINECRAFT_USERNAME',
 ];
 
 for (const key of requiredVars) {
@@ -30,7 +29,5 @@ module.exports = {
   minecraft: {
     host: process.env.MINECRAFT_HOST,
     port: parseInt(process.env.MINECRAFT_PORT || '25565', 10),
-    username: process.env.MINECRAFT_USERNAME,
-    password: process.env.MINECRAFT_PASSWORD || null,
   },
 };

@@ -87,11 +87,11 @@ CHAT_CHANNEL_ID=the_channel_id_for_bot_logs
 # Minecraft
 MINECRAFT_HOST=mc.donutsmp.net
 MINECRAFT_PORT=25565
-MINECRAFT_USERNAME=your_minecraft_username
-MINECRAFT_PASSWORD=your_minecraft_password_if_needed
 ```
 
 > **How to get IDs:** Enable Developer Mode in Discord (User Settings → Advanced → Developer Mode), then right-click any channel or server to copy its ID.
+
+> **Microsoft authentication:** No Minecraft username or password is needed. When the bot first starts it will post a 🔐 **Microsoft Auth Required** embed to your `CHAT_CHANNEL_ID` channel containing a short code and a link (`https://www.microsoft.com/link`). Open that link, enter the code, and sign in with your Microsoft/Minecraft account. The bot will connect automatically once you complete the flow.
 
 ### 4. Register slash commands
 
@@ -112,8 +112,9 @@ npm start
 
 The bot will:
 1. Log in to Discord
-2. Connect to the Minecraft server
-3. Start whispering nearby players every 15 seconds
+2. Post a 🔐 **Microsoft Auth Required** embed in your `CHAT_CHANNEL_ID` channel with a device code
+3. After you authenticate via the link in the embed, connect to the Minecraft server
+4. Start whispering nearby players every 15 seconds
 
 ---
 
@@ -136,11 +137,9 @@ All commands have a **3-second per-user cooldown**.
 |---|---|---|
 | `DISCORD_TOKEN` | ✅ | Discord bot token |
 | `DISCORD_CLIENT_ID` | ✅ | Discord application/client ID |
-| `CHAT_CHANNEL_ID` | ✅ | Channel ID for bot logs |
+| `CHAT_CHANNEL_ID` | ✅ | Channel ID for bot logs and auth codes |
 | `MINECRAFT_HOST` | ✅ | Minecraft server host |
 | `MINECRAFT_PORT` | ❌ | Server port (default: `25565`) |
-| `MINECRAFT_USERNAME` | ✅ | Bot's Minecraft username |
-| `MINECRAFT_PASSWORD` | ❌ | Password (for Microsoft auth) |
 | `DISCORD_GUILD_ID` | ❌ | Guild ID for instant command registration |
 
 ---

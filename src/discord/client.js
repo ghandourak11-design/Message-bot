@@ -76,4 +76,20 @@ async function logToChannel(message) {
   }
 }
 
-module.exports = { client, logToChannel };
+/**
+ * Send an embed to the configured Discord channel.
+ * Silently ignores errors so logging never crashes the bot.
+ * @param {import('discord.js').EmbedBuilder} embed
+ */
+async function logEmbedToChannel(embed) {
+  try {
+    const channel = await client.channels.fetch(config.discord.chatChannelId);
+    if (channel?.isTextBased()) {
+      await channel.send({ embeds: [embed] });
+    }
+  } catch {
+    // Logging must never crash the bot.
+  }
+}
+
+module.exports = { client, logToChannel, logEmbedToChannel };

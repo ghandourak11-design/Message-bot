@@ -9,9 +9,10 @@
 'use strict';
 
 const mineflayer     = require('mineflayer');
+const { EmbedBuilder } = require('discord.js');
 const config         = require('../config');
 const { getRadius, getMessages } = require('../storage');
-const { logToChannel }           = require('../discord/client');
+const { logToChannel, logEmbedToChannel } = require('../discord/client');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -121,26 +122,29 @@ function whisperTick() {
  * Call this once at startup; it will reconnect automatically on disconnect.
  */
 function createBot() {
-  console.log(`[Bot] Connecting to ${config.minecraft.host}:${config.minecraft.port} as ${config.minecraft.username}…`);
+  console.log(`[Bot] Connecting to ${config.minecraft.host}:${config.minecraft.port} via Microsoft auth…`);
 
-  const botOptions = {
-    host:    config.minecraft.host,
-    port:    config.minecraft.port,
-    username: config.minecraft.username,
-    auth:    config.minecraft.password ? 'microsoft' : 'offline',
-  };
-
-  if (config.minecraft.password) {
-    botOptions.password = config.minecraft.password;
-  }
-
-  bot = mineflayer.createBot(botOptions);
+  bot = mineflayer.createBot({
+    host: config.minecraft.host,
+    port: config.minecraft.port,
+    auth: 'microsoft',
+    onMsaCode(data) {
+      const embed = new EmbedBuilder()
+        .setTitle('🔐 Microsoft Auth Required')
+        .setColor(0x0078d4)
+        .setDescription(
+          `Go to: ${data.verification_uri}\nEnter code: \`${data.user_code}\`\nExpires in ${Math.floor(data.expires_in / 60)} minutes.`
+        );
+      console.log(`[Bot] Microsoft auth required – code: ${data.user_code}  url: ${data.verification_uri}`);
+      logEmbedToChannel(embed);
+    },
+  });
 
   // ── Connected ──────────────────────────────────────────────────────────────
   bot.once('spawn', () => {
     isConnected = true;
     console.log('[Bot] Connected to the server.');
-    logToChannel(`✅ Minecraft bot **${config.minecraft.username}** connected to **${config.minecraft.host}**.`);
+    logToChannel(`✅ Minecraft bot **${bot.username}** connected to **${config.minecraft.host}**.`);
 
     // Start the whisper loop.
     if (whisperTimer) clearInterval(whisperTimer);
