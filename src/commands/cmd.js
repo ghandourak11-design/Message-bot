@@ -30,10 +30,27 @@ module.exports = {
     const command = interaction.options.getString('command', true);
     const mcBot   = botModule.getBot();
 
+    await interaction.deferReply();
+
     mcBot.chat(command);
 
+    // Collect server response messages for up to 5 seconds.
+    const RESPONSE_TIMEOUT_MS = 5000;
+    const collected = [];
+    const handler = (msg) => { collected.push(msg); };
+    mcBot.on('messagestr', handler);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, RESPONSE_TIMEOUT_MS));
+    } finally {
+      mcBot.off('messagestr', handler);
+    }
+
+    const response = collected.length > 0 ? collected.join('\n') : 'No response';
     const msg = `⚙️ Command sent by ${interaction.user.tag}: \`${command}\``;
-    await interaction.reply({ content: `✅ Command sent: \`${command}\`` });
+    await interaction.editReply({
+      content: `✅ **Command sent:** \`${command}\`\n📨 **Server response:**\n\`\`\`\n${response}\n\`\`\``,
+    });
     await logToChannel(msg);
     console.log(`[Cmd] ${msg}`);
   },

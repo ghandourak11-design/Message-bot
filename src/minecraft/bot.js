@@ -22,32 +22,15 @@ const WHISPER_INTERVAL_MS = 15_000; // 15 seconds
 /** How long (ms) before the same player can be whispered again. */
 const PER_PLAYER_COOLDOWN_MS = 60_000; // 1 minute
 
-/** Base reconnect delay in milliseconds (doubles on each failure). */
-const RECONNECT_BASE_MS = 10_000; // 10 seconds
-
-/** Maximum reconnect delay in milliseconds. */
-const RECONNECT_MAX_MS = 300_000; // 5 minutes
-
-/** Extra delay used when kicked for "already online". */
-const ALREADY_ONLINE_DELAY_MS = 30_000; // 30 seconds
-
-/** Seconds a connection must stay up before the backoff counter resets. */
-const STABLE_CONNECTION_SEC = 60;
-
 // ─── State ────────────────────────────────────────────────────────────────────
 
 let bot            = null;
 let whisperTimer   = null;
 let isConnected    = false;
+let reconnectTimeout = null;
 
 /** When true the bot will attempt to reconnect after a disconnect/kick. */
 let autoReconnect  = true;
-
-/** Current reconnect backoff attempt counter (resets on stable connection). */
-let reconnectAttempts = 0;
-
-/** Timestamp when the last successful spawn occurred (for backoff reset). */
-let spawnTime = 0;
 
 /** Map of playerName → timestamp of last whisper sent. */
 const lastWhispered = new Map();
@@ -140,12 +123,26 @@ function whisperTick() {
  * Call this once at startup; it will reconnect automatically on disconnect.
  */
 function createBot() {
+  // Clean up any pending reconnect timer.
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+
+  // Clean up the old bot instance before creating a new one.
+  if (bot) {
+    try { bot.quit(); } catch (_) {}
+    bot = null;
+  }
+
   console.log(`[Bot] Connecting to ${config.minecraft.host}:${config.minecraft.port} via Microsoft auth…`);
 
   bot = mineflayer.createBot({
     host: config.minecraft.host,
     port: config.minecraft.port,
     auth: 'microsoft',
+    version: '1.21.1',
+    viewDistance: 1,
     onMsaCode(data) {
       const embed = new EmbedBuilder()
         .setTitle('🔐 Microsoft Auth Required')
@@ -161,7 +158,6 @@ function createBot() {
   // ── Connected ──────────────────────────────────────────────────────────────
   bot.once('spawn', () => {
     isConnected = true;
-    spawnTime   = Date.now();
     console.log('[Bot] Connected to the server.');
     logToChannel(`✅ Minecraft bot **${bot.username}** connected to **${config.minecraft.host}**.`);
 
@@ -186,10 +182,7 @@ function createBot() {
     const msg = `⚠️ Minecraft bot was kicked: ${reasonStr}`;
     console.warn(`[Bot] ${msg}`);
     logToChannel(msg);
-
-    // Longer delay if the server says the account is already online.
-    const alreadyOnline = reasonStr.toLowerCase().includes('already online');
-    scheduleReconnect(alreadyOnline ? ALREADY_ONLINE_DELAY_MS : undefined);
+    // The 'end' event will fire after a kick and handle reconnection.
   });
 
   // ── Errors ────────────────────────────────────────────────────────────────
@@ -208,42 +201,17 @@ function createBot() {
       whisperTimer = null;
     }
 
-    // Reset backoff if the previous connection was stable for 60+ seconds.
-    if (spawnTime && Date.now() - spawnTime >= STABLE_CONNECTION_SEC * 1000) {
-      reconnectAttempts = 0;
-    }
-
-    const nextDelaySec = Math.min(RECONNECT_BASE_MS * (2 ** reconnectAttempts), RECONNECT_MAX_MS) / 1000;
-    const msg = `🔌 Minecraft bot disconnected (${reason || 'unknown reason'}). Reconnecting in ${nextDelaySec}s…`;
+    const msg = `🔌 Minecraft bot disconnected (${reason || 'unknown reason'}). Reconnecting in 5s…`;
     console.warn(`[Bot] ${msg}`);
     logToChannel(msg);
-    scheduleReconnect();
+
+    if (autoReconnect) {
+      reconnectTimeout = setTimeout(() => {
+        reconnectTimeout = null;
+        createBot();
+      }, 5000);
+    }
   });
-}
-
-/**
- * Schedule a reconnect attempt.
- * @param {number} [fixedDelayMs] - Fixed delay override (e.g., for "already online").
- *   When omitted, exponential backoff is used and the counter is incremented.
- */
-let reconnectTimeout = null;
-function scheduleReconnect(fixedDelayMs) {
-  if (!autoReconnect) return;          // respect manual disconnect
-  if (reconnectTimeout) return;        // already scheduled
-
-  let delay;
-  if (fixedDelayMs !== undefined) {
-    // Fixed override — don't advance the backoff counter.
-    delay = fixedDelayMs;
-  } else {
-    delay = Math.min(RECONNECT_BASE_MS * (2 ** reconnectAttempts), RECONNECT_MAX_MS);
-    reconnectAttempts++;
-  }
-
-  reconnectTimeout = setTimeout(() => {
-    reconnectTimeout = null;
-    createBot();
-  }, delay);
 }
 
 // ─── Public control functions ─────────────────────────────────────────────────
@@ -278,8 +246,7 @@ function disconnectBot() {
  */
 function connectBot() {
   if (isConnected) return;
-  autoReconnect     = true;
-  reconnectAttempts = 0;
+  autoReconnect = true;
   createBot();
 }
 
