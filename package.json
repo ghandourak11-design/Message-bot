@@ -1,0 +1,22 @@
+{
+  "name": "message-bot",
+  "version": "1.0.0",
+  "description": "DonutSMP Minecraft whisper bot with Discord.js v14 integration",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "register": "node register-commands.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "mineflayer": "^4.23.0"
+  },
+  "overrides": {
+    "undici": "^6.24.1",
+    "axios": "^1.7.9"
+  }
+}
