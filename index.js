@@ -11,11 +11,17 @@ const { createBot }            = require('./src/minecraft/bot');
 
 // ─── Load slash commands ──────────────────────────────────────────────────────
 
-const radiusCommand  = require('./src/commands/radius');
-const messageCommand = require('./src/commands/message');
+const radiusCommand     = require('./src/commands/radius');
+const messageCommand    = require('./src/commands/message');
+const connectCommand    = require('./src/commands/connect');
+const disconnectCommand = require('./src/commands/disconnect');
+const cmdCommand        = require('./src/commands/cmd');
 
-client.commands.set(radiusCommand.data.name,  radiusCommand);
-client.commands.set(messageCommand.data.name, messageCommand);
+client.commands.set(radiusCommand.data.name,     radiusCommand);
+client.commands.set(messageCommand.data.name,    messageCommand);
+client.commands.set(connectCommand.data.name,    connectCommand);
+client.commands.set(disconnectCommand.data.name, disconnectCommand);
+client.commands.set(cmdCommand.data.name,        cmdCommand);
 
 // ─── Discord ready ────────────────────────────────────────────────────────────
 
