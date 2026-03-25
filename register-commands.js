@@ -22,6 +22,9 @@ if (!token || !clientId) {
 const commands = [
   require('./src/commands/radius').data.toJSON(),
   require('./src/commands/message').data.toJSON(),
+  require('./src/commands/connect').data.toJSON(),
+  require('./src/commands/disconnect').data.toJSON(),
+  require('./src/commands/cmd').data.toJSON(),
 ];
 
 const rest = new REST({ version: '10' }).setToken(token);
