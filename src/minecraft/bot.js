@@ -166,13 +166,13 @@ function createBot() {
     whisperTimer = setInterval(whisperTick, WHISPER_INTERVAL_MS);
   });
 
-  // ── Chat messages (for debugging) ─────────────────────────────────────────
+  // ── Chat messages ─────────────────────────────────────────────────────────
   bot.on('message', (jsonMsg) => {
     const text = jsonMsg.toString();
-    // Only log whisper-related chat to avoid noise.
-    if (text.toLowerCase().includes('whisper') || text.includes('/w ')) {
-      console.log(`[Bot] Chat: ${text}`);
-    }
+    if (!text || !text.trim()) return; // skip empty messages
+
+    console.log(`[Bot] Chat: ${text}`);
+    logToChannel(`**[MC Chat]** ${text}`);
   });
 
   // ── Kicked ────────────────────────────────────────────────────────────────

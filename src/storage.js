@@ -13,13 +13,7 @@ const DATA_FILE = path.join(__dirname, '..', 'data', 'settings.json');
 // Default settings used when the data file does not exist yet.
 const DEFAULTS = {
   radius: 50,
-  messages: [
-    'Hey! Want to team up?',
-    'Nice to meet you on DonutSMP!',
-    'How long have you been playing here?',
-    'You look like a skilled player!',
-    'Let\'s be friends!',
-  ],
+  messages: [],
 };
 
 /**
