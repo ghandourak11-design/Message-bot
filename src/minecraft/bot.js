@@ -129,7 +129,10 @@ function createBot() {
   }
 
   // Clean up the old bot instance before creating a new one.
+  // Remove listeners first so a stale 'end' event from the old bot
+  // cannot schedule an unwanted reconnect.
   if (bot) {
+    bot.removeAllListeners();
     try { bot.quit(); } catch (_) {}
     bot = null;
   }
@@ -244,6 +247,7 @@ function disconnectBot() {
   }
 
   if (bot) {
+    bot.removeAllListeners();
     try { bot.quit(); } catch (err) { console.warn('[Bot] Error during quit (ignored):', err.message); }
     bot = null;
   }
