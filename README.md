@@ -81,8 +81,10 @@ DISCORD_TOKEN=your_discord_bot_token
 DISCORD_CLIENT_ID=your_discord_application_client_id
 CHAT_CHANNEL_ID=the_channel_id_for_bot_logs
 
-# Optional: for instant slash command registration during development
-# DISCORD_GUILD_ID=your_guild_id
+# Your Discord server (guild) ID for instant command registration
+# Right-click your server name in Discord (Developer Mode) → Copy Server ID
+# If omitted, commands register globally (takes up to 1 hour to appear)
+DISCORD_GUILD_ID=your_discord_guild_id_here
 
 # Minecraft
 MINECRAFT_HOST=mc.donutsmp.net
