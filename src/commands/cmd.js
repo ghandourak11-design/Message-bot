@@ -30,9 +30,15 @@ module.exports = {
     const command = interaction.options.getString('command', true);
     const mcBot   = botModule.getBot();
 
+    if (!mcBot) {
+      return interaction.reply({ content: '❌ Bot instance is not available.', ephemeral: true });
+    }
+
+    const cmdText = command.startsWith('/') ? command : `/${command}`;
+
     await interaction.deferReply();
 
-    mcBot.chat(command);
+    mcBot.chat(cmdText);
 
     // Collect server response messages for up to 5 seconds.
     const RESPONSE_TIMEOUT_MS = 5000;
@@ -47,9 +53,9 @@ module.exports = {
     }
 
     const response = collected.length > 0 ? collected.join('\n') : 'No response';
-    const msg = `⚙️ Command sent by ${interaction.user.tag}: \`${command}\``;
+    const msg = `⚙️ Command sent by ${interaction.user.tag}: \`${cmdText}\``;
     await interaction.editReply({
-      content: `✅ **Command sent:** \`${command}\`\n📨 **Server response:**\n\`\`\`\n${response}\n\`\`\``,
+      content: `✅ **Command sent:** \`${cmdText}\`\n📨 **Server response:**\n\`\`\`\n${response}\n\`\`\``,
     });
     await logToChannel(msg);
     console.log(`[Cmd] ${msg}`);

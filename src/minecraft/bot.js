@@ -108,10 +108,10 @@ function whisperTick() {
   const message = pickRandom(messages);
 
   // Send the whisper as a Minecraft command.
-  bot.chat(`/w ${target.username} ${message}`);
+  bot.chat(`/msg ${target.username} ${message}`);
   lastWhispered.set(target.username, now);
 
-  const log = `💬 Whispered **${target.username}**: "${message}"`;
+  const log = `💬 You messaged **${target.username}**: "${message}"`;
   console.log(`[Bot] ${log}`);
   logToChannel(log);
 }
