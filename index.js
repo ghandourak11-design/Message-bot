@@ -6,6 +6,7 @@
 // Load environment variables and validate config first.
 const config = require('./src/config');
 
+const { REST, Routes }         = require('discord.js');
 const { client, logToChannel } = require('./src/discord/client');
 const { createBot }            = require('./src/minecraft/bot');
 
@@ -25,9 +26,34 @@ client.commands.set(cmdCommand.data.name,        cmdCommand);
 
 // ─── Discord ready ────────────────────────────────────────────────────────────
 
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`[Discord] Logged in as ${client.user.tag}`);
   logToChannel(`🤖 Discord bot **${client.user.tag}** is online and ready.`);
+
+  // ─── Register slash commands ──────────────────────────────────────────────
+  try {
+    const commands = [
+      radiusCommand.data.toJSON(),
+      messageCommand.data.toJSON(),
+      connectCommand.data.toJSON(),
+      disconnectCommand.data.toJSON(),
+      cmdCommand.data.toJSON(),
+    ];
+
+    const rest     = new REST({ version: '10' }).setToken(config.discord.token);
+    const clientId = config.discord.clientId;
+    const guildId  = config.discord.guildId;
+
+    if (guildId) {
+      await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
+      console.log(`[Discord] ✅ Slash commands registered to guild ${guildId}.`);
+    } else {
+      await rest.put(Routes.applicationCommands(clientId), { body: commands });
+      console.log('[Discord] ✅ Slash commands registered globally (may take up to 1 hour to appear).');
+    }
+  } catch (err) {
+    console.error('[Discord] Failed to register slash commands:', err);
+  }
 
   // Start the Minecraft bot once Discord is ready so logging works immediately.
   createBot();

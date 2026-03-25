@@ -25,6 +25,7 @@ module.exports = {
     token: process.env.DISCORD_TOKEN,
     clientId: process.env.DISCORD_CLIENT_ID,
     chatChannelId: process.env.CHAT_CHANNEL_ID,
+    guildId: process.env.DISCORD_GUILD_ID || null,
   },
   minecraft: {
     host: process.env.MINECRAFT_HOST,
