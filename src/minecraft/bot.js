@@ -10,8 +10,7 @@
 
 const mineflayer     = require('mineflayer');
 const { EmbedBuilder } = require('discord.js');
-const config         = require('../config');
-const { getRadius, getMessages } = require('../storage');
+const { getRadius, getMessages, getServer } = require('../storage');
 const { logToChannel, logEmbedToChannel } = require('../discord/client');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -135,11 +134,22 @@ function createBot() {
     bot = null;
   }
 
-  console.log(`[Bot] Connecting to ${config.minecraft.host}:${config.minecraft.port} via Microsoft auth…`);
+  const server = getServer();
+  const host = server.host;
+  const port = server.port;
+
+  if (!host) {
+    const msg = '⚠️ No server configured. Use `/server` to set the IP and port first.';
+    console.warn(`[Bot] ${msg}`);
+    logToChannel(msg);
+    return;
+  }
+
+  console.log(`[Bot] Connecting to ${host}:${port} via Microsoft auth…`);
 
   bot = mineflayer.createBot({
-    host: config.minecraft.host,
-    port: config.minecraft.port,
+    host,
+    port,
     auth: 'microsoft',
     version: '1.21.1',
     viewDistance: 1,
@@ -159,7 +169,8 @@ function createBot() {
   bot.once('spawn', () => {
     isConnected = true;
     console.log('[Bot] Connected to the server.');
-    logToChannel(`✅ Minecraft bot **${bot.username}** connected to **${config.minecraft.host}**.`);
+    const currentServer = getServer();
+    logToChannel(`✅ Minecraft bot **${bot.username}** connected to **${currentServer.host}**.`);
 
     // Start the whisper loop.
     if (whisperTimer) clearInterval(whisperTimer);
@@ -201,7 +212,7 @@ function createBot() {
       whisperTimer = null;
     }
 
-    const msg = `🔌 Minecraft bot disconnected (${reason || 'unknown reason'}). Reconnecting in 5s…`;
+    const msg = `🔌 Minecraft bot disconnected (${reason || 'unknown reason'}). Reconnecting in 15s…`;
     console.warn(`[Bot] ${msg}`);
     logToChannel(msg);
 
@@ -209,7 +220,7 @@ function createBot() {
       reconnectTimeout = setTimeout(() => {
         reconnectTimeout = null;
         createBot();
-      }, 5000);
+      }, 15000);
     }
   });
 }
