@@ -31,6 +31,12 @@ let reconnectTimeout = null;
 /** When true the bot will attempt to reconnect after a disconnect/kick. */
 let autoReconnect  = true;
 
+/** Timer for the "active" random-action loop. */
+let activeTimer    = null;
+
+/** Whether active mode is currently enabled. */
+let activeMode     = false;
+
 /** Map of playerName → timestamp of last whisper sent. */
 const lastWhispered = new Map();
 
@@ -113,6 +119,74 @@ function whisperTick() {
   const log = `💬 You messaged **${target.username}**: "${message}"`;
   console.log(`[Bot] ${log}`);
   logToChannel(log);
+}
+
+// ─── Active behaviour loop ────────────────────────────────────────────────────
+
+/** Milliseconds between each random-action tick while active. */
+const ACTIVE_TICK_MS = 3_000; // 3 seconds
+
+/**
+ * Perform one random action: jump, walk in a small circle, or swing arm in a
+ * random direction.
+ */
+function activeTick() {
+  if (!isConnected || !bot) return;
+
+  const roll = Math.random();
+
+  if (roll < 0.33) {
+    // ── Jump ──────────────────────────────────────────────────────────────
+    bot.setControlState('jump', true);
+    setTimeout(() => {
+      if (bot && activeMode && isConnected) bot.setControlState('jump', false);
+    }, 500);
+  } else if (roll < 0.66) {
+    // ── Walk in a small circle ────────────────────────────────────────────
+    bot.setControlState('forward', true);
+    bot.setControlState('left', true);
+    setTimeout(() => {
+      if (bot && activeMode && isConnected) {
+        bot.setControlState('forward', false);
+        bot.setControlState('left', false);
+      }
+    }, 2000);
+  } else {
+    // ── Swing arm in a random direction ───────────────────────────────────
+    const yaw   = Math.random() * Math.PI * 2 - Math.PI;  // -π to π
+    const pitch = Math.random() * Math.PI - Math.PI / 2;  // -π/2 to π/2
+    bot.look(yaw, pitch, false);
+    bot.swingArm();
+  }
+}
+
+/**
+ * Start the active-behaviour loop (random jumps, circles, arm swings).
+ * No-ops if already active.
+ */
+function startActiveBehavior() {
+  if (activeMode) return;
+  activeMode = true;
+  if (activeTimer) clearInterval(activeTimer);
+  activeTick();
+  activeTimer = setInterval(activeTick, ACTIVE_TICK_MS);
+}
+
+/**
+ * Stop the active-behaviour loop.
+ */
+function stopActiveBehavior() {
+  activeMode = false;
+  if (activeTimer) {
+    clearInterval(activeTimer);
+    activeTimer = null;
+  }
+  // Release any held controls.
+  if (bot) {
+    bot.setControlState('forward', false);
+    bot.setControlState('left', false);
+    bot.setControlState('jump', false);
+  }
 }
 
 // ─── Bot creation ─────────────────────────────────────────────────────────────
@@ -214,6 +288,7 @@ function createBot() {
       clearInterval(whisperTimer);
       whisperTimer = null;
     }
+    stopActiveBehavior();
 
     const msg = `🔌 Minecraft bot disconnected (${reason || 'unknown reason'}). Reconnecting in 15s…`;
     console.warn(`[Bot] ${msg}`);
@@ -246,6 +321,8 @@ function disconnectBot() {
     whisperTimer = null;
   }
 
+  stopActiveBehavior();
+
   if (bot) {
     bot.removeAllListeners();
     try { bot.quit(); } catch (err) { console.warn('[Bot] Error during quit (ignored):', err.message); }
@@ -273,4 +350,4 @@ function getBot() {
   return bot;
 }
 
-module.exports = { createBot, connectBot, disconnectBot, getBot, get isConnected() { return isConnected; }, get autoReconnect() { return autoReconnect; } };
+module.exports = { createBot, connectBot, disconnectBot, getBot, startActiveBehavior, stopActiveBehavior, get isConnected() { return isConnected; }, get autoReconnect() { return autoReconnect; }, get isActive() { return activeMode; } };

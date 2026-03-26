@@ -26,6 +26,8 @@ const commands = [
   require('./src/commands/disconnect').data.toJSON(),
   require('./src/commands/cmd').data.toJSON(),
   require('./src/commands/server').data.toJSON(),
+  require('./src/commands/active').data.toJSON(),
+  require('./src/commands/deactivate').data.toJSON(),
 ];
 
 const rest = new REST({ version: '10' }).setToken(token);
