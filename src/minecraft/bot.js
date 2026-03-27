@@ -10,7 +10,7 @@
 
 const mineflayer     = require('mineflayer');
 const { EmbedBuilder } = require('discord.js');
-const { getRadius, getMessages, getServer } = require('../storage');
+const { getRadius, getMessages, getServer, getMacroDelay } = require('../storage');
 const { logToChannel, logEmbedToChannel } = require('../discord/client');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -36,6 +36,15 @@ let activeTimer    = null;
 
 /** Whether active mode is currently enabled. */
 let activeMode     = false;
+
+/** Timer for the macro spam loop. */
+let macroTimer     = null;
+
+/** Whether the macro is currently running. */
+let macroRunning   = false;
+
+/** The text (message or command) the macro will repeat. */
+let macroText      = null;
 
 /** Map of playerName → timestamp of last whisper sent. */
 const lastWhispered = new Map();
@@ -189,6 +198,46 @@ function stopActiveBehavior() {
   }
 }
 
+// ─── Macro loop ───────────────────────────────────────────────────────────────
+
+/**
+ * Send one macro tick: send the configured macro text in chat.
+ */
+function macroTick() {
+  if (!isConnected || !bot || !macroText) return;
+  bot.chat(macroText);
+
+  const log = `🔁 Macro sent: "${macroText}"`;
+  console.log(`[Bot] ${log}`);
+  logToChannel(log);
+}
+
+/**
+ * Start the macro loop that repeats the given text at the stored delay.
+ * Stops any already-running macro first.
+ * @param {string} text - The message or command to repeat.
+ */
+function startMacro(text) {
+  stopMacro();
+  macroText    = text;
+  macroRunning = true;
+  const delayMs = getMacroDelay() * 1000;
+  macroTick();
+  macroTimer = setInterval(macroTick, delayMs);
+}
+
+/**
+ * Stop the macro loop.
+ */
+function stopMacro() {
+  macroRunning = false;
+  macroText    = null;
+  if (macroTimer) {
+    clearInterval(macroTimer);
+    macroTimer = null;
+  }
+}
+
 // ─── Bot creation ─────────────────────────────────────────────────────────────
 
 /**
@@ -289,6 +338,7 @@ function createBot() {
       whisperTimer = null;
     }
     stopActiveBehavior();
+    stopMacro();
 
     const msg = `🔌 Minecraft bot disconnected (${reason || 'unknown reason'}). Reconnecting in 15s…`;
     console.warn(`[Bot] ${msg}`);
@@ -322,6 +372,7 @@ function disconnectBot() {
   }
 
   stopActiveBehavior();
+  stopMacro();
 
   if (bot) {
     bot.removeAllListeners();
@@ -350,4 +401,4 @@ function getBot() {
   return bot;
 }
 
-module.exports = { createBot, connectBot, disconnectBot, getBot, startActiveBehavior, stopActiveBehavior, get isConnected() { return isConnected; }, get autoReconnect() { return autoReconnect; }, get isActive() { return activeMode; } };
+module.exports = { createBot, connectBot, disconnectBot, getBot, startActiveBehavior, stopActiveBehavior, startMacro, stopMacro, get isConnected() { return isConnected; }, get autoReconnect() { return autoReconnect; }, get isActive() { return activeMode; }, get isMacroRunning() { return macroRunning; } };

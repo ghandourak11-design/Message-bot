@@ -18,6 +18,7 @@ const DEFAULTS = {
     host: null,
     port: 25565,
   },
+  macroDelay: 5,
 };
 
 /**
@@ -134,4 +135,24 @@ function setServer(host, port) {
   save(settings);
 }
 
-module.exports = { getRadius, setRadius, getMessages, addMessage, removeMessage, getServer, setServer };
+// ─── Macro Delay ─────────────────────────────────────────────────────────────
+
+/**
+ * Get the currently saved macro delay (in seconds).
+ * @returns {number}
+ */
+function getMacroDelay() {
+  return load().macroDelay ?? DEFAULTS.macroDelay;
+}
+
+/**
+ * Persist a new macro delay (in seconds).
+ * @param {number} seconds
+ */
+function setMacroDelay(seconds) {
+  const settings = load();
+  settings.macroDelay = seconds;
+  save(settings);
+}
+
+module.exports = { getRadius, setRadius, getMessages, addMessage, removeMessage, getServer, setServer, getMacroDelay, setMacroDelay };
