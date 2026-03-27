@@ -20,6 +20,8 @@ const cmdCommand        = require('./src/commands/cmd');
 const serverCommand     = require('./src/commands/server');
 const activeCommand     = require('./src/commands/active');
 const deactivateCommand = require('./src/commands/deactivate');
+const macroCommand      = require('./src/commands/macro');
+const timerCommand      = require('./src/commands/timer');
 
 client.commands.set(radiusCommand.data.name,     radiusCommand);
 client.commands.set(messageCommand.data.name,    messageCommand);
@@ -29,6 +31,8 @@ client.commands.set(cmdCommand.data.name,        cmdCommand);
 client.commands.set(serverCommand.data.name,     serverCommand);
 client.commands.set(activeCommand.data.name,     activeCommand);
 client.commands.set(deactivateCommand.data.name, deactivateCommand);
+client.commands.set(macroCommand.data.name,      macroCommand);
+client.commands.set(timerCommand.data.name,      timerCommand);
 
 // ─── Discord ready ────────────────────────────────────────────────────────────
 
@@ -47,6 +51,8 @@ client.once('ready', async () => {
       serverCommand.data.toJSON(),
       activeCommand.data.toJSON(),
       deactivateCommand.data.toJSON(),
+      macroCommand.data.toJSON(),
+      timerCommand.data.toJSON(),
     ];
 
     const rest     = new REST({ version: '10' }).setToken(config.discord.token);
